@@ -98,8 +98,9 @@ class YtDlpDownloader(Downloader):
         # Bilibili's CDN frequently blocks proxy/VPN nodes, causing 412
         # or SSL errors. Direct connections usually work better.
         # Set B2T_USE_PROXY=1 to re-enable the system proxy if needed.
-        if not os.getenv("B2T_USE_PROXY"):
-            ydl_opts["noproxy"] = True
+        use_proxy = os.getenv("B2T_USE_PROXY", "").strip().lower() in {"1", "true", "yes", "on"}
+        if not use_proxy:
+            ydl_opts["proxy"] = ""
 
         if source.page is not None:
             ydl_opts["playlist_items"] = str(source.page)
