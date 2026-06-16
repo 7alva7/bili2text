@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -83,6 +84,24 @@ class YtDlpDownloader(Downloader):
             "quiet": True,
             "no_warnings": True,
         }
+
+        # Support cookies for authenticated access to Bilibili.
+        # Priority: B2T_COOKIE_FILE env var > cookies.txt in workspace.
+        cookie_file = os.getenv("B2T_COOKIE_FILE")
+        if cookie_file:
+            cookie_path = Path(cookie_file).expanduser()
+        else:
+            cookie_path = settings.workspace_root / "cookies.txt"
+        if cookie_path.exists():
+            ydl_opts["cookiefile"] = str(cookie_path)
+
+        # Bilibili's CDN frequently blocks proxy/VPN nodes, causing 412
+        # or SSL errors. Direct connections usually work better.
+        # Set B2T_USE_PROXY=1 to re-enable the system proxy if needed.
+        use_proxy = os.getenv("B2T_USE_PROXY", "").strip().lower() in {"1", "true", "yes", "on"}
+        if not use_proxy:
+            ydl_opts["proxy"] = ""
+
         if source.page is not None:
             ydl_opts["playlist_items"] = str(source.page)
             ydl_opts["noplaylist"] = False
